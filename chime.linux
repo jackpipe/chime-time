@@ -1,0 +1,39 @@
+#!/usr/bin/env bash 
+
+# Required to get sound from cron
+export XDG_RUNTIME_DIR="/run/user/$UID"
+
+# Directory to find chime sound files
+export DIR=~/chime-time/
+
+function active_sound {
+
+	pactl list sink-inputs | while read -r line ; do
+		echo $line | grep -oP 'Corked: \K[^$]'
+		echo $line | grep -oP 'application.process.binary = "\K[^"]+'
+	done | while read corked
+	do
+		read proc
+		echo $corked $proc
+	done
+}
+
+echo "chime"
+
+any=$(active_sound | grep -v "^y" | grep -v "mumble")
+
+if [[ -z "${any//[:space]}" ]]; then
+	echo "no other sound playing"
+
+	hour12=$(date +%I)
+	hour24=$(date +%-H)
+
+	if (( ${hour24} > 6 )) ; then
+		if (( ${hour24} < 22 )) ; then
+			echo "within chime hours, playing"
+			#mplayer $DIR/chime-${hour12}.aiff
+			/usr/bin/play $DIR/chime-${hour12}.aiff
+			echo "return code $?"
+		fi
+	fi
+fi

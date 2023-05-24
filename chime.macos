@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+export DIR=~/chime-time/
+
+if [[ -z $1 ]];then
+	sleep 55
+else
+	input="$1"
+fi
+
+# brew install portaudio
+# pip3 install soundmeter
+/usr/local/bin/soundmeter -c -s 5 2>/dev/null | grep avg | while IFS=" " read -r a b
+do
+  mute=$(osascript -e 'output muted of (get volume settings)')
+  volume=$(osascript -e 'output volume of (get volume settings)')
+  mic=$(osascript -e 'input volume of (get volume settings)')
+
+	hour=${input:=$(date +%I)}
+
+  let "chimevol = 50 + ( $b / 20 )"
+
+  osascript -e "set volume output muted false" > /dev/null
+  osascript -e "set volume output volume ${chimevol}" > /dev/null
+
+  afplay ${DIR}/chime-${hour}.aiff
+
+  osascript -e "set volume output volume $volume" > /dev/null
+  osascript -e "set volume output muted $mute" > /dev/null
+done
